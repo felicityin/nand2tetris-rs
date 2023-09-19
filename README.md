@@ -2,7 +2,9 @@
 
 This repository implements some of the projects in the book "The Elements of Computer Systems: Building a Modern Computer from First Principles".
 
-# Assembly
+# Run
+
+## Assembly
 
 ```
 cargo run -- asm -p [path]
@@ -15,7 +17,7 @@ cargo run -- asm -p data/asm/Max.asm
 cargo run -- asm -p data/asm/Pong.asm
 ```
 
-# VM
+## VM
 
 ```
 cargo run -- vm -p [path]
@@ -39,7 +41,7 @@ cargo run -- vm -p data/vm/FunctionCalls/FibonacciElement
 cargo run -- vm -p data/vm/FunctionCalls/StaticsTest
 ```
 
-# Tokenize
+## Tokenize
 
 ```
 cargo run -- token -p [path]
@@ -56,4 +58,23 @@ cargo run -- token -p data/jack/ExpressionLessSquare/Main.jack
 cargo run -- token -p data/jack/Square/Square.jack
 cargo run -- token -p data/jack/Square/SquareGame.jack
 cargo run -- token -p data/jack/Square/Main.jack
+```
+
+## Analyze
+
+```
+cargo run -- analyze -p [path]
+```
+
+eg.
+```
+cargo run -- analyze -p data/jack/ArrayTest/Main.jack
+
+cargo run -- analyze -p data/jack/ExpressionLessSquare/Square.jack
+cargo run -- analyze -p data/jack/ExpressionLessSquare/SquareGame.jack
+cargo run -- analyze -p data/jack/ExpressionLessSquare/Main.jack
+
+cargo run -- analyze -p data/jack/Square/Square.jack
+cargo run -- analyze -p data/jack/Square/SquareGame.jack
+cargo run -- analyze -p data/jack/Square/Main.jack
 ```

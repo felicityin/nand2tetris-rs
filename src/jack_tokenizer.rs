@@ -101,6 +101,10 @@ impl JackTokenizer {
         }
     }
 
+    pub fn dest_path(&self) -> &PathBuf {
+        &self.dest_path
+    }
+
     pub fn tokens(self) -> Vec<Token> {
         self.tokens
     }
@@ -168,7 +172,7 @@ impl JackTokenizer {
         }
     }
 
-    pub fn save_token_file(&self) {
+    pub fn save_file(&self) {
         let mut output: Vec<u8> = vec![];
         writeln!(&mut output, "<tokens>").unwrap();
 
@@ -206,6 +210,7 @@ impl CharStream {
     }
 }
 
+#[derive(Clone)]
 pub struct Token {
     pub category:   Category,
     pub value:      String,
@@ -230,7 +235,7 @@ impl Token {
         }
     }
 
-    pub fn unterminal_token(value: &str, is_begin: bool) -> Self {
+    pub fn unterminal(value: &str, is_begin: bool) -> Self {
         let form = if is_begin {
             format!("<{}>", value)
         } else {
@@ -246,6 +251,7 @@ impl Token {
     }
 }
 
+#[derive(Clone)]
 pub enum Category {
     Symbol,
     StringConstant,
