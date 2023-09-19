@@ -1,11 +1,13 @@
 mod assembler;
 mod jack_tokenizer;
+mod utils;
 mod vm_translator;
 
 use std::ffi::OsString;
 use std::path::PathBuf;
 
 use assembler::Assembler;
+use jack_tokenizer::JackTokenizer;
 use vm_translator::VmTranslator;
 
 fn main() {
@@ -39,6 +41,19 @@ fn main() {
                         .value_parser(clap::builder::ValueParser::os_string())
                         .help("path to *.vm file or directory"),
                 ),
+        )
+        .subcommand(
+            clap::Command::new("token")
+                .about("Compile *.jack file into *.token.xml file")
+                .arg(
+                    clap::Arg::new("path")
+                        .long("path")
+                        .short('p')
+                        .required(true)
+                        .num_args(1)
+                        .value_parser(clap::builder::ValueParser::os_string())
+                        .help("path to *.jack file"),
+                ),
         );
 
     let matches = cmd.get_matches();
@@ -46,6 +61,7 @@ fn main() {
     match matches.subcommand() {
         Some(("asm", matches)) => assembly(matches),
         Some(("vm", matches)) => vm_translate(matches),
+        Some(("token", matches)) => tokenize(matches),
         _ => unreachable!(),
     }
 }
@@ -64,4 +80,12 @@ fn vm_translate(matches: &clap::ArgMatches) {
     let mut vm_translator = VmTranslator::new(path);
     vm_translator.run();
     println!("\noutput: {}", vm_translator.dest_path().to_str().unwrap());
+}
+
+fn tokenize(matches: &clap::ArgMatches) {
+    let path = matches.get_one::<OsString>("path").unwrap();
+    let path = PathBuf::from(path).canonicalize().unwrap();
+    let mut tokenizer = JackTokenizer::new(path);
+    tokenizer.tokenize();
+    tokenizer.save_token_file();
 }

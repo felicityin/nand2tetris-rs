@@ -1,9 +1,11 @@
 use std::collections::HashMap;
-use std::fs::{self, read_to_string};
+use std::fs::read_to_string;
 use std::io::Write;
 use std::path::PathBuf;
 
 use once_cell::sync::OnceCell;
+
+use crate::utils::{save_file, substr};
 
 pub static COMP_TABLE: OnceCell<HashMap<&str, &str>> = OnceCell::new();
 pub static DEST_TABLE: OnceCell<HashMap<&str, &str>> = OnceCell::new();
@@ -235,17 +237,6 @@ impl Assembler {
     }
 
     fn save_binary(&self) {
-        let mut file_out = fs::OpenOptions::new()
-            .create(true)
-            .write(true)
-            .truncate(true)
-            .open(&self.dest_path)
-            .unwrap();
-        file_out.write_all(&self.output).unwrap();
-        file_out.flush().unwrap();
+        save_file(&self.output, &self.dest_path).unwrap();
     }
-}
-
-fn substr(s: &str, start: usize, len: usize) -> String {
-    s.chars().skip(start).take(len).collect()
 }

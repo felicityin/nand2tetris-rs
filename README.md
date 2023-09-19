@@ -38,3 +38,22 @@ cargo run -- vm -p data/vm/FunctionCalls/NestedCall
 cargo run -- vm -p data/vm/FunctionCalls/FibonacciElement
 cargo run -- vm -p data/vm/FunctionCalls/StaticsTest
 ```
+
+# Tokenize
+
+```
+cargo run -- token -p [path]
+```
+
+eg.
+```
+cargo run -- token -p data/jack/ArrayTest/Main.jack
+
+cargo run -- token -p data/jack/ExpressionLessSquare/Square.jack
+cargo run -- token -p data/jack/ExpressionLessSquare/SquareGame.jack
+cargo run -- token -p data/jack/ExpressionLessSquare/Main.jack
+
+cargo run -- token -p data/jack/Square/Square.jack
+cargo run -- token -p data/jack/Square/SquareGame.jack
+cargo run -- token -p data/jack/Square/Main.jack
+```

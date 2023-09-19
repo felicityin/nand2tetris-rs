@@ -1,9 +1,11 @@
 use std::collections::HashMap;
-use std::fs::{self, read_dir, read_to_string};
+use std::fs::{read_dir, read_to_string};
 use std::io::Write;
 use std::path::PathBuf;
 
 use once_cell::sync::OnceCell;
+
+use crate::utils::{save_file, substr};
 
 pub static ARITH_TABLE: OnceCell<HashMap<&str, &str>> = OnceCell::new();
 pub static SEGMENT_TABLE: OnceCell<HashMap<&str, &str>> = OnceCell::new();
@@ -151,14 +153,7 @@ impl VmTranslator {
     }
 
     fn save_file(&self) {
-        let mut file_out = fs::OpenOptions::new()
-            .create(true)
-            .write(true)
-            .truncate(true)
-            .open(&self.dest_path)
-            .unwrap();
-        file_out.write_all(&self.output).unwrap();
-        file_out.flush().unwrap();
+        save_file(&self.output, &self.dest_path).unwrap();
     }
 }
 
@@ -484,10 +479,6 @@ impl SingleVmTranslator {
         writeln!(&mut self.output, "A=M").unwrap();
         writeln!(&mut self.output, "0;JMP").unwrap();
     }
-}
-
-fn substr(s: &str, start: usize, len: usize) -> String {
-    s.chars().skip(start).take(len).collect()
 }
 
 fn push_d(output: &mut Vec<u8>) {
