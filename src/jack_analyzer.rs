@@ -4,7 +4,7 @@ use std::path::PathBuf;
 
 use once_cell::sync::OnceCell;
 
-use crate::jack_tokenizer::Token;
+use crate::jack_tokenizer::{Token, TokenType};
 use crate::utils::save_file;
 
 pub static CLASS_DEC: OnceCell<HashSet<&str>> = OnceCell::new();
@@ -55,12 +55,42 @@ impl JackAnalyzer {
         self.compile_class();
     }
 
+    fn step(&mut self, expected: &str) {
+        let token = self.tokens.next();
+        match token.category {
+            TokenType::Keyword | TokenType::Symbol => {
+                if token.value != expected {
+                    panic!("invalid: {}, line: {}", token.value, token.line);
+                }
+            }
+            _ => {}
+        }
+        self.tree.push(token);
+    }
+
+    fn step_identifier(&mut self) {
+        let token = self.tokens.next();
+        if token.category != TokenType::Identifier {
+            panic!("invalid: {}, line: {}", token.value, token.line);
+        }
+        assert_eq!(token.category, TokenType::Identifier);
+        self.tree.push(token);
+    }
+
+    fn step_type(&mut self) {
+        let token = self.tokens.next();
+        if token.category != TokenType::Keyword && token.category != TokenType::Identifier {
+            panic!("invalid: {}, line: {}", token.value, token.line);
+        }
+        self.tree.push(token);
+    }
+
     fn compile_class(&mut self) {
         self.tree.push(Token::unterminal("class", true));
 
-        self.tree.push(self.tokens.next()); // class
-        self.tree.push(self.tokens.next()); // className
-        self.tree.push(self.tokens.next()); // {
+        self.step("class"); // class
+        self.step_identifier(); // className
+        self.step("{"); // {
         while CLASS_DEC
             .get()
             .unwrap()
@@ -75,7 +105,7 @@ impl JackAnalyzer {
         {
             self.compile_subroutine();
         }
-        self.tree.push(self.tokens.next()); // }
+        self.step("}"); // }
 
         self.tree.push(Token::unterminal("class", false));
     }
@@ -84,13 +114,13 @@ impl JackAnalyzer {
         self.tree.push(Token::unterminal("classVarDec", true));
 
         self.tree.push(self.tokens.next()); // static | field
-        self.tree.push(self.tokens.next()); // type
-        self.tree.push(self.tokens.next()); // varName
+        self.step_type(); // type
+        self.step_identifier(); // varName
         while self.tokens.peek().value.as_str() == "," {
-            self.tree.push(self.tokens.next()); // ,
-            self.tree.push(self.tokens.next()); // varName
+            self.step(","); // ,
+            self.step_identifier(); // varName
         }
-        self.tree.push(self.tokens.next()); // ;
+        self.step(";"); // ;
 
         self.tree.push(Token::unterminal("classVarDec", false));
     }
@@ -100,19 +130,19 @@ impl JackAnalyzer {
 
         self.tree.push(self.tokens.next()); // constructor | function | method
         self.tree.push(self.tokens.next()); // void | type
-        self.tree.push(self.tokens.next()); // subroutineName
-        self.tree.push(self.tokens.next()); // (
+        self.step_identifier(); // subroutineName
+        self.step("("); // (
         self.compile_param_list();
-        self.tree.push(self.tokens.next()); // )
+        self.step(")"); // )
 
         self.tree.push(Token::unterminal("subroutineBody", true));
 
-        self.tree.push(self.tokens.next()); // {
+        self.step("{"); // {
         while self.tokens.peek().value.as_str() == "var" {
             self.compile_var_dec();
         }
         self.compile_statements();
-        self.tree.push(self.tokens.next()); // }
+        self.step("}"); // }
 
         self.tree.push(Token::unterminal("subroutineBody", false));
         self.tree.push(Token::unterminal("subroutineDec", false));
@@ -122,13 +152,13 @@ impl JackAnalyzer {
         self.tree.push(Token::unterminal("parameterList", true));
 
         if self.tokens.peek().value.as_str() != ")" {
-            self.tree.push(self.tokens.next()); // type
-            self.tree.push(self.tokens.next()); // varName
+            self.step_type(); // type
+            self.step_identifier(); // varName
         }
         while self.tokens.peek().value.as_str() == "," {
-            self.tree.push(self.tokens.next()); // ,
-            self.tree.push(self.tokens.next()); // type
-            self.tree.push(self.tokens.next()); // varName
+            self.step(","); // ,
+            self.step_type(); // type
+            self.step_identifier(); // varName
         }
 
         self.tree.push(Token::unterminal("parameterList", false));
@@ -137,14 +167,14 @@ impl JackAnalyzer {
     fn compile_var_dec(&mut self) {
         self.tree.push(Token::unterminal("varDec", true));
 
-        self.tree.push(self.tokens.next()); // var
-        self.tree.push(self.tokens.next()); // type
-        self.tree.push(self.tokens.next()); // varName
+        self.step("var"); // var
+        self.step_type(); // type
+        self.step_identifier(); // varName
         while self.tokens.peek().value.as_str() == "," {
-            self.tree.push(self.tokens.next()); // ,
-            self.tree.push(self.tokens.next()); // varName
+            self.step(","); // ,
+            self.step_identifier(); // varName
         }
-        self.tree.push(self.tokens.next()); // ;
+        self.step(";"); // ;
 
         self.tree.push(Token::unterminal("varDec", false));
     }
@@ -174,18 +204,18 @@ impl JackAnalyzer {
     fn compile_if(&mut self) {
         self.tree.push(Token::unterminal("ifStatement", true));
 
-        self.tree.push(self.tokens.next()); // if
-        self.tree.push(self.tokens.next()); // (
+        self.step("if"); // if
+        self.step("("); // (
         self.compile_expression();
-        self.tree.push(self.tokens.next()); // )
-        self.tree.push(self.tokens.next()); // {
+        self.step(")"); // )
+        self.step("{"); // {
         self.compile_statements();
-        self.tree.push(self.tokens.next()); // }
+        self.step("}"); // }
         if self.tokens.peek().value.as_str() == "else" {
-            self.tree.push(self.tokens.next()); // else
-            self.tree.push(self.tokens.next()); // {
+            self.step("else"); // else
+            self.step("{"); // {
             self.compile_statements();
-            self.tree.push(self.tokens.next()); // }
+            self.step("}"); // }
         }
 
         self.tree.push(Token::unterminal("ifStatement", false));
@@ -194,16 +224,16 @@ impl JackAnalyzer {
     fn compile_let(&mut self) {
         self.tree.push(Token::unterminal("letStatement", true));
 
-        self.tree.push(self.tokens.next()); // let
-        self.tree.push(self.tokens.next()); // varName
+        self.step("let"); // let
+        self.step_identifier(); // varName
         if self.tokens.peek().value.as_str() == "[" {
-            self.tree.push(self.tokens.next()); // [
+            self.step("["); // [
             self.compile_expression();
-            self.tree.push(self.tokens.next()); // ]
+            self.step("]"); // ]
         }
-        self.tree.push(self.tokens.next()); // =
+        self.step("="); // =
         self.compile_expression();
-        self.tree.push(self.tokens.next()); // ;
+        self.step(";"); // ;
 
         self.tree.push(Token::unterminal("letStatement", false));
     }
@@ -211,13 +241,13 @@ impl JackAnalyzer {
     fn compile_while(&mut self) {
         self.tree.push(Token::unterminal("whileStatement", true));
 
-        self.tree.push(self.tokens.next()); // while
-        self.tree.push(self.tokens.next()); // (
+        self.step("while"); // while
+        self.step("("); // (
         self.compile_expression();
-        self.tree.push(self.tokens.next()); // )
-        self.tree.push(self.tokens.next()); // {
+        self.step(")"); // )
+        self.step("{"); // {
         self.compile_statements();
-        self.tree.push(self.tokens.next()); // }
+        self.step("}"); // }
 
         self.tree.push(Token::unterminal("whileStatement", false));
     }
@@ -225,20 +255,20 @@ impl JackAnalyzer {
     fn compile_do(&mut self) {
         self.tree.push(Token::unterminal("doStatement", true));
 
-        self.tree.push(self.tokens.next()); // do
+        self.step("do"); // do
         self.tree.push(self.tokens.next()); // subroutineCall
         if self.tokens.peek().value.as_str() == "(" {
-            self.tree.push(self.tokens.next()); // (
+            self.step("("); // (
             self.compile_expression_list();
-            self.tree.push(self.tokens.next()); // )
+            self.step(")"); // )
         } else if self.tokens.peek().value.as_str() == "." {
-            self.tree.push(self.tokens.next()); // .
-            self.tree.push(self.tokens.next()); // subroutineName
-            self.tree.push(self.tokens.next()); // (
+            self.step("."); // .
+            self.step_identifier(); // subroutineName
+            self.step("("); // (
             self.compile_expression_list();
-            self.tree.push(self.tokens.next()); // )
+            self.step(")"); // )
         }
-        self.tree.push(self.tokens.next()); // ;
+        self.step(";"); // ;
 
         self.tree.push(Token::unterminal("doStatement", false));
     }
@@ -246,11 +276,11 @@ impl JackAnalyzer {
     fn compile_return(&mut self) {
         self.tree.push(Token::unterminal("returnStatement", true));
 
-        self.tree.push(self.tokens.next()); // return
+        self.step("return"); // return
         if self.tokens.peek().value.as_str() != ";" {
             self.compile_expression();
         }
-        self.tree.push(self.tokens.next()); // ;
+        self.step(";"); // ;
 
         self.tree.push(Token::unterminal("returnStatement", false));
     }
@@ -275,9 +305,9 @@ impl JackAnalyzer {
         self.tree.push(Token::unterminal("term", true));
 
         if self.tokens.peek().value.as_str() == "(" {
-            self.tree.push(self.tokens.next()); // (
+            self.step("("); // (
             self.compile_expression();
-            self.tree.push(self.tokens.next()); // )
+            self.step(")"); // )
         } else if UNARY_OP
             .get()
             .unwrap()
@@ -289,21 +319,21 @@ impl JackAnalyzer {
             self.tree.push(self.tokens.next());
             match self.tokens.peek().value.as_str() {
                 "[" => {
-                    self.tree.push(self.tokens.next()); // [
+                    self.step("["); // [
                     self.compile_expression();
-                    self.tree.push(self.tokens.next()); // ]
+                    self.step("]"); // ]
                 }
                 "(" => {
-                    self.tree.push(self.tokens.next()); // (
+                    self.step("("); // (
                     self.compile_expression_list();
-                    self.tree.push(self.tokens.next()); // )
+                    self.step(")"); // )
                 }
                 "." => {
-                    self.tree.push(self.tokens.next()); // .
-                    self.tree.push(self.tokens.next()); // subroutineName
-                    self.tree.push(self.tokens.next()); // (
+                    self.step("."); // .
+                    self.step_identifier(); // subroutineName
+                    self.step("("); // (
                     self.compile_expression_list();
-                    self.tree.push(self.tokens.next()); // )
+                    self.step(")"); // )
                 }
                 _ => {}
             }
@@ -318,7 +348,7 @@ impl JackAnalyzer {
         if self.tokens.peek().value.as_str() != ")" {
             self.compile_expression();
             while self.tokens.peek().value.as_str() == "," {
-                self.tree.push(self.tokens.next()); // ,
+                self.step(","); // ,
                 self.compile_expression();
             }
         }

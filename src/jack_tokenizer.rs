@@ -110,7 +110,7 @@ impl JackTokenizer {
     }
 
     pub fn tokenize(&mut self) {
-        for line in self.codes.iter() {
+        for (i, line) in self.codes.iter().enumerate() {
             let line = line.trim().to_owned();
 
             if line.is_empty() {
@@ -128,7 +128,7 @@ impl JackTokenizer {
 
                 if SYMBOLS.get().unwrap().contains(&c) {
                     self.tokens
-                        .push(Token::new(Category::Symbol, c.to_string()));
+                        .push(Token::new(TokenType::Symbol, c.to_string(), i));
                 } else if c == '\"' {
                     let mut word = String::default();
                     while !chars.is_end() {
@@ -138,7 +138,8 @@ impl JackTokenizer {
                         }
                         word.push(c);
                     }
-                    self.tokens.push(Token::new(Category::StringConstant, word));
+                    self.tokens
+                        .push(Token::new(TokenType::StringConstant, word, i));
                 } else if c.is_numeric() {
                     let mut number = String::from(c);
                     while !chars.is_end() {
@@ -150,7 +151,7 @@ impl JackTokenizer {
                         chars.next();
                     }
                     self.tokens
-                        .push(Token::new(Category::IntegerConstant, number));
+                        .push(Token::new(TokenType::IntegerConstant, number, i));
                 } else {
                     let mut word = String::from(c);
                     while !chars.is_end() {
@@ -163,9 +164,9 @@ impl JackTokenizer {
                         }
                     }
                     if KEYWORDS.get().unwrap().contains(word.as_str()) {
-                        self.tokens.push(Token::new(Category::Keyword, word));
+                        self.tokens.push(Token::new(TokenType::Keyword, word, i));
                     } else {
-                        self.tokens.push(Token::new(Category::Identifier, word));
+                        self.tokens.push(Token::new(TokenType::Identifier, word, i));
                     }
                 }
             }
@@ -212,14 +213,15 @@ impl CharStream {
 
 #[derive(Clone)]
 pub struct Token {
-    pub category:   Category,
+    pub category:   TokenType,
     pub value:      String,
     pub is_termial: bool,
     pub form:       String,
+    pub line:       usize,
 }
 
 impl Token {
-    pub fn new(category: Category, value: String) -> Self {
+    pub fn new(category: TokenType, value: String, line: usize) -> Self {
         let form = match value.as_str() {
             "<" => format!("<{}> &lt; </{}>", category, category),
             ">" => format!("<{}> &gt; </{}>", category, category),
@@ -232,6 +234,7 @@ impl Token {
             value,
             is_termial: true,
             form,
+            line,
         }
     }
 
@@ -243,16 +246,17 @@ impl Token {
         };
 
         Self {
-            category: Category::Identifier, // unused
+            category: TokenType::Identifier, // unused
             value: value.to_owned(),
             is_termial: false,
             form,
+            line: 0,
         }
     }
 }
 
-#[derive(Clone)]
-pub enum Category {
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum TokenType {
     Symbol,
     StringConstant,
     IntegerConstant,
@@ -260,14 +264,14 @@ pub enum Category {
     Identifier,
 }
 
-impl fmt::Display for Category {
+impl fmt::Display for TokenType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Category::Symbol => write!(f, "symbol"),
-            Category::StringConstant => write!(f, "stringConstant"),
-            Category::IntegerConstant => write!(f, "integerConstant"),
-            Category::Keyword => write!(f, "keyword"),
-            Category::Identifier => write!(f, "identifier"),
+            TokenType::Symbol => write!(f, "symbol"),
+            TokenType::StringConstant => write!(f, "stringConstant"),
+            TokenType::IntegerConstant => write!(f, "integerConstant"),
+            TokenType::Keyword => write!(f, "keyword"),
+            TokenType::Identifier => write!(f, "identifier"),
         }
     }
 }
