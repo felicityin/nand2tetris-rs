@@ -60,21 +60,32 @@ cargo run -- token -p data/jack/Square/SquareGame.jack
 cargo run -- token -p data/jack/Square/Main.jack
 ```
 
-## Analyze
+## Parse
 
 ```
-cargo run -- analyze -p [path]
+cargo run -- parse -p [path]
 ```
 
 eg.
 ```
-cargo run -- analyze -p data/jack/ArrayTest/Main.jack
+cargo run -- parse -p data/jack/ArrayTest/Main.jack
 
-cargo run -- analyze -p data/jack/ExpressionLessSquare/Square.jack
-cargo run -- analyze -p data/jack/ExpressionLessSquare/SquareGame.jack
-cargo run -- analyze -p data/jack/ExpressionLessSquare/Main.jack
+cargo run -- parse -p data/jack/ExpressionLessSquare/Square.jack
+cargo run -- parse -p data/jack/ExpressionLessSquare/SquareGame.jack
+cargo run -- parse -p data/jack/ExpressionLessSquare/Main.jack
 
-cargo run -- analyze -p data/jack/Square/Square.jack
-cargo run -- analyze -p data/jack/Square/SquareGame.jack
-cargo run -- analyze -p data/jack/Square/Main.jack
+cargo run -- parse -p data/jack/Square/Square.jack
+cargo run -- parse -p data/jack/Square/SquareGame.jack
+cargo run -- parse -p data/jack/Square/Main.jack
+```
+
+## Compile
+
+```
+cargo run -- compile -p [path]
+```
+
+eg.
+```
+
 ```

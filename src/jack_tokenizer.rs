@@ -216,8 +216,8 @@ pub struct Token {
     pub category:   TokenType,
     pub value:      String,
     pub is_termial: bool,
-    pub form:       String,
     pub line:       usize,
+    pub form:       String,
 }
 
 impl Token {
