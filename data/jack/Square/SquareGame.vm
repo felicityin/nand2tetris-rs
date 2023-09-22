@@ -1,0 +1,178 @@
+function SquareGame.new 0
+push constant 2
+call Memory.alloc 1
+push pointer 0
+push constant 0
+push constant 0
+push constant 30
+call Square.new 3
+push this 0
+push constant 0
+push this 1
+push pointer 0
+return
+function SquareGame.dispose 1
+push argument 0
+push pointer 0
+push this 0
+call Square.square 0
+push temp 0
+push pointer 0
+call Memory.deAlloc 1
+push temp 0
+push constant 0
+return
+function SquareGame.moveSquare 1
+push argument 0
+push pointer 0
+push this 1
+push constant 1
+eq
+if-goto if_0
+goto fi_1
+label if_0
+push this 0
+call Square.square 0
+push temp 0
+label fi_1
+push this 1
+push constant 2
+eq
+if-goto if_2
+goto fi_3
+label if_2
+push this 0
+call Square.square 0
+push temp 0
+label fi_3
+push this 1
+push constant 3
+eq
+if-goto if_4
+goto fi_5
+label if_4
+push this 0
+call Square.square 0
+push temp 0
+label fi_5
+push this 1
+push constant 4
+eq
+if-goto if_6
+goto fi_7
+label if_6
+push this 0
+call Square.square 0
+push temp 0
+label fi_7
+push constant 5
+call Sys.wait 1
+push temp 0
+push constant 0
+return
+function SquareGame.run 1
+push constant 0
+push constant 0
+push argument 0
+push pointer 0
+push constant 0
+push local 1
+label loop_start_8
+push local 1
+not
+if-goto loop_end_9
+label loop_start_10
+push local 0
+push constant 0
+eq
+if-goto loop_end_11
+call Keyboard.keyPressed 0
+push local 0
+push pointer 0
+call SquareGame.moveSquare 0
+push temp 0
+goto loop_start_10
+label loop_end_11
+push local 0
+push constant 81
+eq
+if-goto if_12
+goto fi_13
+label if_12
+push constant 0
+not
+push local 1
+label fi_13
+push local 0
+push constant 90
+eq
+if-goto if_14
+goto fi_15
+label if_14
+push this 0
+call Square.square 0
+push temp 0
+label fi_15
+push local 0
+push constant 88
+eq
+if-goto if_16
+goto fi_17
+label if_16
+push this 0
+call Square.square 0
+push temp 0
+label fi_17
+push local 0
+push constant 131
+eq
+if-goto if_18
+goto fi_19
+label if_18
+push constant 1
+push this 1
+label fi_19
+push local 0
+push constant 133
+eq
+if-goto if_20
+goto fi_21
+label if_20
+push constant 2
+push this 1
+label fi_21
+push local 0
+push constant 130
+eq
+if-goto if_22
+goto fi_23
+label if_22
+push constant 3
+push this 1
+label fi_23
+push local 0
+push constant 132
+eq
+if-goto if_24
+goto fi_25
+label if_24
+push constant 4
+push this 1
+label fi_25
+label loop_start_26
+push local 0
+push constant 0
+eq
+not
+if-goto loop_end_27
+call Keyboard.keyPressed 0
+push local 0
+push pointer 0
+call SquareGame.moveSquare 0
+push temp 0
+goto loop_start_26
+label loop_end_27
+goto loop_start_8
+label loop_end_9
+push constant 0
+return

@@ -6,8 +6,8 @@ use std::path::PathBuf;
 use once_cell::sync::OnceCell;
 
 use crate::jack_tokenizer::{Token, TokenType};
-use crate::utils::save_file;
 use crate::symbol_table::VarKind;
+use crate::utils::save_file;
 
 pub static CLASS_DEC: OnceCell<HashSet<&str>> = OnceCell::new();
 pub static FUNC_DEC: OnceCell<HashSet<&str>> = OnceCell::new();
@@ -16,14 +16,13 @@ pub static OP: OnceCell<HashSet<char>> = OnceCell::new();
 pub static UNARY_OP: OnceCell<HashSet<char>> = OnceCell::new();
 
 pub struct JackParser {
-    dest_path:         PathBuf,
-    tokens:            TokenStream,
-    completed_tokens:  Vec<Token>,
-    class:             Class,
+    tokens:           TokenStream,
+    completed_tokens: Vec<Token>,
+    class:            Class,
 }
 
 impl JackParser {
-    pub fn new(mut path: PathBuf, tokens: Vec<Token>) -> Self {
+    pub fn new(tokens: Vec<Token>) -> Self {
         CLASS_DEC.set(HashSet::from(["static", "field"])).unwrap();
 
         FUNC_DEC
@@ -39,22 +38,14 @@ impl JackParser {
 
         UNARY_OP.set(HashSet::from(['-', '~'])).unwrap();
 
-        assert_eq!(path.extension().unwrap(), "jack");
-        path.set_extension("tree.xml");
-
         Self {
-            dest_path: path,
-            tokens:    TokenStream::new(tokens),
-            completed_tokens:      vec![],
-            class:     Class::default(),
+            tokens:           TokenStream::new(tokens),
+            completed_tokens: vec![],
+            class:            Class::default(),
         }
     }
 
-    pub fn dest_path(&self) -> &PathBuf {
-        &self.dest_path
-    }
-
-    pub fn root(self) -> Class {
+    pub fn ast(self) -> Class {
         self.class
     }
 
@@ -124,11 +115,13 @@ impl JackParser {
         }
         self.step("}"); // }
 
-        self.completed_tokens.push(Token::unterminal("class", false));
+        self.completed_tokens
+            .push(Token::unterminal("class", false));
     }
 
     fn compile_class_var_dec(&mut self) {
-        self.completed_tokens.push(Token::unterminal("classVarDec", true));
+        self.completed_tokens
+            .push(Token::unterminal("classVarDec", true));
 
         // static | field
         let token = self.tokens.next();
@@ -161,11 +154,13 @@ impl JackParser {
             names,
         });
 
-        self.completed_tokens.push(Token::unterminal("classVarDec", false));
+        self.completed_tokens
+            .push(Token::unterminal("classVarDec", false));
     }
 
     fn compile_subroutine(&mut self) {
-        self.completed_tokens.push(Token::unterminal("subroutineDec", true));
+        self.completed_tokens
+            .push(Token::unterminal("subroutineDec", true));
 
         // constructor | function | method
         let token = self.tokens.next();
@@ -196,7 +191,8 @@ impl JackParser {
         let params = self.compile_param_list();
         self.step(")"); // )
 
-        self.completed_tokens.push(Token::unterminal("subroutineBody", true));
+        self.completed_tokens
+            .push(Token::unterminal("subroutineBody", true));
 
         self.step("{"); // {
         let mut vars = vec![];
@@ -211,37 +207,51 @@ impl JackParser {
             type_,
             name,
             params,
-            body: SubroutineBody { local_vars: vars, body: statements },
+            body: SubroutineBody {
+                local_vars: vars,
+                body:       statements,
+            },
         });
 
-        self.completed_tokens.push(Token::unterminal("subroutineBody", false));
-        self.completed_tokens.push(Token::unterminal("subroutineDec", false));
+        self.completed_tokens
+            .push(Token::unterminal("subroutineBody", false));
+        self.completed_tokens
+            .push(Token::unterminal("subroutineDec", false));
     }
 
     fn compile_param_list(&mut self) -> Vec<Param> {
-        self.completed_tokens.push(Token::unterminal("parameterList", true));
+        self.completed_tokens
+            .push(Token::unterminal("parameterList", true));
 
         let mut params = vec![];
 
         if self.tokens.peek().value.as_str() != ")" {
             let type_ = self.step_type(); // type
             let name = self.step_identifier(); // varName
-            params.push(Param { name, var_type: type_ });
+            params.push(Param {
+                name,
+                var_type: type_,
+            });
         }
         while self.tokens.peek().value.as_str() == "," {
             self.step(","); // ,
             let type_ = self.step_type(); // type
             let name = self.step_identifier(); // varName
-            params.push(Param { name, var_type: type_ });
+            params.push(Param {
+                name,
+                var_type: type_,
+            });
         }
 
-        self.completed_tokens.push(Token::unterminal("parameterList", false));
+        self.completed_tokens
+            .push(Token::unterminal("parameterList", false));
 
         params
     }
 
     fn compile_var_dec(&mut self) -> VarDec {
-        self.completed_tokens.push(Token::unterminal("varDec", true));
+        self.completed_tokens
+            .push(Token::unterminal("varDec", true));
 
         let mut names = vec![];
 
@@ -254,13 +264,15 @@ impl JackParser {
         }
         self.step(";"); // ;
 
-        self.completed_tokens.push(Token::unterminal("varDec", false));
+        self.completed_tokens
+            .push(Token::unterminal("varDec", false));
 
         VarDec { type_, names }
     }
 
     fn compile_statements(&mut self) -> Vec<Statement> {
-        self.completed_tokens.push(Token::unterminal("statements", true));
+        self.completed_tokens
+            .push(Token::unterminal("statements", true));
 
         let mut statements = vec![];
 
@@ -280,13 +292,15 @@ impl JackParser {
             }
         }
 
-        self.completed_tokens.push(Token::unterminal("statements", false));
+        self.completed_tokens
+            .push(Token::unterminal("statements", false));
 
         statements
     }
 
     fn compile_if(&mut self) -> Statement {
-        self.completed_tokens.push(Token::unterminal("ifStatement", true));
+        self.completed_tokens
+            .push(Token::unterminal("ifStatement", true));
 
         self.step("if"); // if
         self.step("("); // (
@@ -307,7 +321,8 @@ impl JackParser {
             None
         };
 
-        self.completed_tokens.push(Token::unterminal("ifStatement", false));
+        self.completed_tokens
+            .push(Token::unterminal("ifStatement", false));
 
         Statement::If(IfStatement {
             cond,
@@ -317,7 +332,8 @@ impl JackParser {
     }
 
     fn compile_let(&mut self) -> Statement {
-        self.completed_tokens.push(Token::unterminal("letStatement", true));
+        self.completed_tokens
+            .push(Token::unterminal("letStatement", true));
 
         self.step("let"); // let
         let var_name = self.step_identifier(); // varName
@@ -335,7 +351,8 @@ impl JackParser {
         let right_expr = self.compile_expression();
         self.step(";"); // ;
 
-        self.completed_tokens.push(Token::unterminal("letStatement", false));
+        self.completed_tokens
+            .push(Token::unterminal("letStatement", false));
 
         Statement::Let(LetStatement {
             var_name,
@@ -345,7 +362,8 @@ impl JackParser {
     }
 
     fn compile_while(&mut self) -> Statement {
-        self.completed_tokens.push(Token::unterminal("whileStatement", true));
+        self.completed_tokens
+            .push(Token::unterminal("whileStatement", true));
 
         self.step("while"); // while
         self.step("("); // (
@@ -356,13 +374,15 @@ impl JackParser {
         let body = self.compile_statements();
         self.step("}"); // }
 
-        self.completed_tokens.push(Token::unterminal("whileStatement", false));
+        self.completed_tokens
+            .push(Token::unterminal("whileStatement", false));
 
         Statement::While(WhileStatement { cond, body })
     }
 
     fn compile_do(&mut self) -> Statement {
-        self.completed_tokens.push(Token::unterminal("doStatement", true));
+        self.completed_tokens
+            .push(Token::unterminal("doStatement", true));
 
         self.step("do"); // do
         let name = self.step_identifier(); // subroutineCall
@@ -371,7 +391,10 @@ impl JackParser {
             let args = self.compile_expression_list();
             self.step(")"); // )
 
-            SubroutineCall::Internal(InternalCall { name, args: Args(args) })
+            SubroutineCall::Internal(InternalCall {
+                name,
+                args: Args(args),
+            })
         } else if self.tokens.peek().value.as_str() == "." {
             self.step("."); // .
             let subroutine_name = self.step_identifier(); // subroutineName
@@ -393,13 +416,15 @@ impl JackParser {
         };
         self.step(";"); // ;
 
-        self.completed_tokens.push(Token::unterminal("doStatement", false));
+        self.completed_tokens
+            .push(Token::unterminal("doStatement", false));
 
         Statement::Do(DoStatement { subroutine_call })
     }
 
     fn compile_return(&mut self) -> Statement {
-        self.completed_tokens.push(Token::unterminal("returnStatement", true));
+        self.completed_tokens
+            .push(Token::unterminal("returnStatement", true));
 
         self.step("return"); // return
 
@@ -411,13 +436,15 @@ impl JackParser {
 
         self.step(";"); // ;
 
-        self.completed_tokens.push(Token::unterminal("returnStatement", false));
+        self.completed_tokens
+            .push(Token::unterminal("returnStatement", false));
 
         Statement::Return(ReturnStatement { expr })
     }
 
     fn compile_expression(&mut self) -> Expression {
-        self.completed_tokens.push(Token::unterminal("expression", true));
+        self.completed_tokens
+            .push(Token::unterminal("expression", true));
 
         let term = self.compile_term();
 
@@ -448,7 +475,8 @@ impl JackParser {
             op_terms.push(OpTerm { op, term });
         }
 
-        self.completed_tokens.push(Token::unterminal("expression", false));
+        self.completed_tokens
+            .push(Token::unterminal("expression", false));
 
         Expression {
             term: Box::new(term),
@@ -556,7 +584,8 @@ impl JackParser {
     }
 
     fn compile_expression_list(&mut self) -> Vec<Expression> {
-        self.completed_tokens.push(Token::unterminal("expressionList", true));
+        self.completed_tokens
+            .push(Token::unterminal("expressionList", true));
 
         let mut expressions = vec![];
 
@@ -568,19 +597,22 @@ impl JackParser {
             }
         }
 
-        self.completed_tokens.push(Token::unterminal("expressionList", false));
+        self.completed_tokens
+            .push(Token::unterminal("expressionList", false));
 
         expressions
     }
 
-    pub fn save_file(&self) {
+    pub fn save_file(&self, dst_path: &PathBuf) {
+        assert_eq!(dst_path.extension().unwrap(), "xml");
+
         let mut output: Vec<u8> = vec![];
 
         for token in self.completed_tokens.iter() {
             writeln!(&mut output, "{}", token.form).unwrap();
         }
 
-        save_file(&output, &self.dest_path).unwrap();
+        save_file(&output, dst_path).unwrap();
     }
 }
 
@@ -629,11 +661,11 @@ pub enum ClassScope {
     Field,
 }
 
-impl Into<VarKind> for ClassScope {
-    fn into(self) -> VarKind {
-        match self {
-            Self::Field => VarKind::Field,
-            Self::Static => VarKind::Static,
+impl From<ClassScope> for VarKind {
+    fn from(val: ClassScope) -> Self {
+        match val {
+            ClassScope::Field => VarKind::Field,
+            ClassScope::Static => VarKind::Static,
         }
     }
 }
@@ -775,34 +807,9 @@ pub enum Op {
     Euqal,
 }
 
-impl fmt::Display for Op {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Op::Add => write!(f, "+"),
-            Op::Minus => write!(f, "-"),
-            Op::Multiply => write!(f, "*"),
-            Op::Divid => write!(f, "/"),
-            Op::And => write!(f, "&"),
-            Op::Or => write!(f, "|"),
-            Op::Greater => write!(f, ">"),
-            Op::Less => write!(f, "<"),
-            Op::Euqal => write!(f, "="),
-        }
-    }
-}
-
 pub enum UnaryOp {
     Neg,
     Not,
-}
-
-impl fmt::Display for UnaryOp {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            UnaryOp::Neg => write!(f, "-"),
-            UnaryOp::Not => write!(f, "~"),
-        }
-    }
 }
 
 pub enum KeywordConstant {

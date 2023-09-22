@@ -90,11 +90,6 @@ impl VmTranslator {
     }
 
     pub fn run(&mut self) {
-        self.parse();
-        self.save_file();
-    }
-
-    fn parse(&mut self) {
         if self.multi_files {
             // add bootstrap codes
             // SP = 256
@@ -152,7 +147,7 @@ impl VmTranslator {
         }
     }
 
-    fn save_file(&self) {
+    pub fn save_file(&self) {
         save_file(&self.output, &self.dest_path).unwrap();
     }
 }

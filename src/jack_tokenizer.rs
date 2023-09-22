@@ -109,7 +109,7 @@ impl JackTokenizer {
         self.tokens
     }
 
-    pub fn tokenize(&mut self) {
+    pub fn run(&mut self) {
         for (i, line) in self.codes.iter().enumerate() {
             let line = line.trim().to_owned();
 

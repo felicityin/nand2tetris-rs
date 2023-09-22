@@ -1,14 +1,18 @@
 mod assembler;
-mod jack_analyzer;
+mod jack_compiler;
+mod jack_parser;
 mod jack_tokenizer;
+mod symbol_table;
 mod utils;
 mod vm_translator;
+mod vm_writer;
 
 use std::ffi::OsString;
 use std::path::PathBuf;
 
 use assembler::Assembler;
-use jack_analyzer::JackAnalyzer;
+use jack_compiler::compile_to_vm;
+use jack_parser::JackParser;
 use jack_tokenizer::JackTokenizer;
 use vm_translator::VmTranslator;
 
@@ -58,8 +62,21 @@ fn main() {
                 ),
         )
         .subcommand(
-            clap::Command::new("analyze")
+            clap::Command::new("parse")
                 .about("Compile *.jack file into *.tree.xml file")
+                .arg(
+                    clap::Arg::new("path")
+                        .long("path")
+                        .short('p')
+                        .required(true)
+                        .num_args(1)
+                        .value_parser(clap::builder::ValueParser::os_string())
+                        .help("path to *.jack file"),
+                ),
+        )
+        .subcommand(
+            clap::Command::new("compile")
+                .about("Compile *.jack file into *.vm file")
                 .arg(
                     clap::Arg::new("path")
                         .long("path")
@@ -77,7 +94,8 @@ fn main() {
         Some(("asm", matches)) => assembly(matches),
         Some(("vm", matches)) => vm_translate(matches),
         Some(("token", matches)) => tokenize(matches),
-        Some(("analyze", matches)) => analyze(matches),
+        Some(("parse", matches)) => parse(matches),
+        Some(("compile", matches)) => compile(matches),
         _ => unreachable!(),
     }
 }
@@ -85,37 +103,53 @@ fn main() {
 fn assembly(matches: &clap::ArgMatches) {
     let path = matches.get_one::<OsString>("path").unwrap();
     let path = PathBuf::from(path).canonicalize().unwrap();
+
     let mut assembler = Assembler::new(path);
     assembler.run();
+
     println!("\noutput: {}", assembler.dest_path().to_str().unwrap());
 }
 
 fn vm_translate(matches: &clap::ArgMatches) {
     let path = matches.get_one::<OsString>("path").unwrap();
     let path = PathBuf::from(path).canonicalize().unwrap();
+
     let mut vm_translator = VmTranslator::new(path);
     vm_translator.run();
+
+    vm_translator.save_file();
     println!("\noutput: {}", vm_translator.dest_path().to_str().unwrap());
 }
 
 fn tokenize(matches: &clap::ArgMatches) {
     let path = matches.get_one::<OsString>("path").unwrap();
     let path = PathBuf::from(path).canonicalize().unwrap();
+
     let mut tokenizer = JackTokenizer::new(path);
-    tokenizer.tokenize();
+    tokenizer.run();
+
     tokenizer.save_file();
     println!("\noutput: {}", tokenizer.dest_path().to_str().unwrap());
 }
 
-fn analyze(matches: &clap::ArgMatches) {
+fn parse(matches: &clap::ArgMatches) {
+    let path = matches.get_one::<OsString>("path").unwrap();
+    let mut path = PathBuf::from(path).canonicalize().unwrap();
+
+    let mut tokenizer = JackTokenizer::new(path.clone());
+    tokenizer.run();
+
+    let mut parser = JackParser::new(tokenizer.tokens());
+    parser.run();
+
+    path.set_extension("xml");
+    parser.save_file(&path);
+    println!("\noutput: {}", path.to_str().unwrap());
+}
+
+fn compile(matches: &clap::ArgMatches) {
     let path = matches.get_one::<OsString>("path").unwrap();
     let path = PathBuf::from(path).canonicalize().unwrap();
 
-    let mut tokenizer = JackTokenizer::new(path.clone());
-    tokenizer.tokenize();
-
-    let mut analyzer = JackAnalyzer::new(path, tokenizer.tokens());
-    analyzer.analyze();
-    analyzer.save_file();
-    println!("\noutput: {}", analyzer.dest_path().to_str().unwrap());
+    compile_to_vm(path);
 }

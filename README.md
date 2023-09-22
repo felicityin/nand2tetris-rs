@@ -87,5 +87,9 @@ cargo run -- compile -p [path]
 
 eg.
 ```
+cargo run -- compile -p data/jack/ArrayTest/Main.jack
 
+cargo run -- compile -p data/jack/Square/Square.jack
+cargo run -- compile -p data/jack/Square/SquareGame.jack
+cargo run -- compile -p data/jack/Square/Main.jack
 ```
