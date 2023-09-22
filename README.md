@@ -1,6 +1,6 @@
 # Descri-ption
 
-This re-pository im-plements some of the -projects in the book "The Elements of Com-puter Systems: Building a Modern Com-puter from First Princi-ples".
+This repository implements some of the projects in the book "The Elements of Computer Systems: Building a Modern Computer from First Principles".
 
 # Run
 
@@ -32,7 +32,7 @@ cargo run -- vm -p data/vm/MemoryAccess/BasicTest.vm
 cargo run -- vm -p data/vm/MemoryAccess/PointerTest.vm 
 cargo run -- vm -p data/vm/MemoryAccess/StaticTest.vm
 
-cargo run -- vm -p data/vm/ProgramFlow/BasicLoo-p.vm
+cargo run -- vm -p data/vm/ProgramFlow/BasicLoop.vm
 cargo run -- vm -p data/vm/ProgramFlow/FibonacciSeries.vm 
 
 cargo run -- vm -p data/vm/FunctionCalls/Sim-pleFunction.vm

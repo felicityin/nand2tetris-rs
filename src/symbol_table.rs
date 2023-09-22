@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::fmt;
 
-use crate::jack_parser::VarType;
+use crate::ast::VarType;
 use crate::vm_writer::Segment;
 
 pub struct SymbolTable {

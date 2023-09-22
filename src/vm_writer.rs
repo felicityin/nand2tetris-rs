@@ -2,7 +2,7 @@ use std::fmt;
 use std::io::Write;
 use std::path::PathBuf;
 
-use crate::jack_parser::*;
+use crate::ast::*;
 use crate::symbol_table::{SymbolTable, Var, VarKind};
 use crate::utils::save_file;
 

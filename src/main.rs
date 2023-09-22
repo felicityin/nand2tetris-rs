@@ -1,4 +1,5 @@
 mod assembler;
+mod ast;
 mod jack_compiler;
 mod jack_parser;
 mod jack_tokenizer;
