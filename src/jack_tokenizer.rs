@@ -4,21 +4,20 @@ use std::fs::read_to_string;
 use std::io::Write;
 use std::path::PathBuf;
 
-use crate::utils::{save_file, substr};
-
 use once_cell::sync::OnceCell;
+
+use crate::utils::{save_file, substr};
 
 pub static KEYWORDS: OnceCell<HashSet<&str>> = OnceCell::new();
 pub static SYMBOLS: OnceCell<HashSet<char>> = OnceCell::new();
 
 pub struct JackTokenizer {
-    codes:     Vec<String>,
-    dest_path: PathBuf,
-    tokens:    Vec<Token>,
+    codes:  Vec<String>,
+    tokens: Vec<Token>,
 }
 
 impl JackTokenizer {
-    pub fn new(mut path: PathBuf) -> Self {
+    pub fn new(path: PathBuf) -> Self {
         KEYWORDS
             .set(HashSet::from([
                 "class",
@@ -57,7 +56,7 @@ impl JackTokenizer {
         let mut multi_comments = false;
         let mut codes = vec![];
 
-        for line in read_to_string(path.clone()).unwrap().lines() {
+        for line in read_to_string(path).unwrap().lines() {
             let line = line.trim();
 
             if multi_comments {
@@ -92,17 +91,10 @@ impl JackTokenizer {
             }
         }
 
-        path.set_extension("token.xml");
-
         Self {
             codes,
-            dest_path: path,
             tokens: vec![],
         }
-    }
-
-    pub fn dest_path(&self) -> &PathBuf {
-        &self.dest_path
     }
 
     pub fn tokens(self) -> Vec<Token> {
@@ -173,7 +165,7 @@ impl JackTokenizer {
         }
     }
 
-    pub fn save_file(&self) {
+    pub fn save_file(&self, dst_path: &PathBuf) {
         let mut output: Vec<u8> = vec![];
         writeln!(&mut output, "<tokens>").unwrap();
 
@@ -182,7 +174,7 @@ impl JackTokenizer {
         }
 
         writeln!(&mut output, "</tokens>").unwrap();
-        save_file(&output, &self.dest_path).unwrap();
+        save_file(&output, dst_path).unwrap();
     }
 }
 

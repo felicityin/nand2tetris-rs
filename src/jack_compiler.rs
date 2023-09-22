@@ -4,7 +4,7 @@ use crate::jack_parser::*;
 use crate::jack_tokenizer::JackTokenizer;
 use crate::vm_writer::VmWriter;
 
-pub fn compile_to_vm(mut path: PathBuf) {
+pub fn compile_to_vm(path: PathBuf) {
     let mut tokenizer = JackTokenizer::new(path.clone());
     tokenizer.run();
 
@@ -14,6 +14,13 @@ pub fn compile_to_vm(mut path: PathBuf) {
     let mut vm_writer = VmWriter::new(parser.ast());
     vm_writer.run();
 
-    path.set_extension("vm");
-    vm_writer.save_file(path);
+    let mut dst_path = PathBuf::from(path.parent().unwrap());
+    dst_path.push(format!(
+        "output/{}",
+        path.file_name().unwrap().to_str().unwrap()
+    ));
+    dst_path.set_extension("vm");
+    println!("\noutput: {}", dst_path.to_str().unwrap());
+
+    vm_writer.save_file(dst_path);
 }

@@ -104,37 +104,69 @@ fn assembly(matches: &clap::ArgMatches) {
     let path = matches.get_one::<OsString>("path").unwrap();
     let path = PathBuf::from(path).canonicalize().unwrap();
 
-    let mut assembler = Assembler::new(path);
+    let mut assembler = Assembler::new(path.clone());
     assembler.run();
 
-    println!("\noutput: {}", assembler.dest_path().to_str().unwrap());
+    let mut dst_path = PathBuf::from(path.parent().unwrap());
+    dst_path.push(format!(
+        "output/{}.vm",
+        path.file_name().unwrap().to_str().unwrap()
+    ));
+    dst_path.set_extension("vm");
+    println!("\noutput: {}", dst_path.to_str().unwrap());
+
+    assembler.save_binary(&dst_path);
 }
 
 fn vm_translate(matches: &clap::ArgMatches) {
     let path = matches.get_one::<OsString>("path").unwrap();
     let path = PathBuf::from(path).canonicalize().unwrap();
 
-    let mut vm_translator = VmTranslator::new(path);
+    let mut vm_translator = VmTranslator::new(path.clone());
     vm_translator.run();
 
-    vm_translator.save_file();
-    println!("\noutput: {}", vm_translator.dest_path().to_str().unwrap());
+    let dst_path = if path.is_dir() {
+        let mut dst_path = path.clone();
+        dst_path.push(format!(
+            "output/{}.asm",
+            path.file_name().unwrap().to_str().unwrap()
+        ));
+        dst_path
+    } else {
+        let mut dst_path = PathBuf::from(path.parent().unwrap());
+        dst_path.push(format!(
+            "output/{}",
+            path.file_name().unwrap().to_str().unwrap()
+        ));
+        dst_path.set_extension("asm");
+        dst_path
+    };
+    println!("\noutput: {}", dst_path.to_str().unwrap());
+
+    vm_translator.save_file(&dst_path);
 }
 
 fn tokenize(matches: &clap::ArgMatches) {
     let path = matches.get_one::<OsString>("path").unwrap();
     let path = PathBuf::from(path).canonicalize().unwrap();
 
-    let mut tokenizer = JackTokenizer::new(path);
+    let mut tokenizer = JackTokenizer::new(path.clone());
     tokenizer.run();
 
-    tokenizer.save_file();
-    println!("\noutput: {}", tokenizer.dest_path().to_str().unwrap());
+    let mut dst_path = PathBuf::from(path.parent().unwrap());
+    dst_path.push(format!(
+        "output/{}",
+        path.file_name().unwrap().to_str().unwrap()
+    ));
+    dst_path.set_extension("token.xml");
+    println!("\noutput: {}", dst_path.to_str().unwrap());
+
+    tokenizer.save_file(&dst_path);
 }
 
 fn parse(matches: &clap::ArgMatches) {
     let path = matches.get_one::<OsString>("path").unwrap();
-    let mut path = PathBuf::from(path).canonicalize().unwrap();
+    let path = PathBuf::from(path).canonicalize().unwrap();
 
     let mut tokenizer = JackTokenizer::new(path.clone());
     tokenizer.run();
@@ -142,9 +174,15 @@ fn parse(matches: &clap::ArgMatches) {
     let mut parser = JackParser::new(tokenizer.tokens());
     parser.run();
 
-    path.set_extension("xml");
-    parser.save_file(&path);
-    println!("\noutput: {}", path.to_str().unwrap());
+    let mut dst_path = PathBuf::from(path.parent().unwrap());
+    dst_path.push(format!(
+        "output/{}",
+        path.file_name().unwrap().to_str().unwrap()
+    ));
+    dst_path.set_extension("tree.xml");
+    println!("\noutput: {}", dst_path.to_str().unwrap());
+
+    parser.save_file(&dst_path);
 }
 
 fn compile(matches: &clap::ArgMatches) {

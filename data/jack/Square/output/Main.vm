@@ -53,9 +53,9 @@ add
 push pointer 1
 push that 0
 label fi_1
-push local 4
-call String.dispose 1
 push local 2
+call String.dispose 1
+push local 4
 call String.dispose 1
 push constant 0
 return

@@ -62,9 +62,9 @@ call Output.printInt 1
 push temp 0
 call Output.println 0
 push temp 0
-push local 6
-call String.dispose 1
 push local 4
+call String.dispose 1
+push local 6
 call String.dispose 1
 push local 5
 call String.dispose 1

@@ -12,7 +12,6 @@ pub static SEGMENT_TABLE: OnceCell<HashMap<&str, &str>> = OnceCell::new();
 
 pub struct VmTranslator {
     vm_files:     Vec<PathBuf>,
-    dest_path:    PathBuf,
     output:       Vec<u8>,
     symbol_index: u32,
     return_index: u32,
@@ -20,7 +19,7 @@ pub struct VmTranslator {
 }
 
 impl VmTranslator {
-    pub fn new(mut path: PathBuf) -> Self {
+    pub fn new(path: PathBuf) -> Self {
         ARITH_TABLE
             .set(HashMap::from([
                 ("not", "!"),
@@ -48,45 +47,29 @@ impl VmTranslator {
 
         let mut multi_files = false;
         let mut vm_files = vec![];
-        #[allow(unused_assignments)]
-        let mut dest_path = PathBuf::default();
 
         if path.is_dir() {
             multi_files = true;
-            for file in read_dir(path.clone()).unwrap() {
+            for file in read_dir(path).unwrap() {
                 let file = file.unwrap();
                 let path = file.path();
 
-                if path.extension().unwrap() == "vm" {
+                if path.is_file() && path.extension().unwrap() == "vm" {
                     vm_files.push(path);
                 }
             }
-            path.push(format!(
-                "{}.asm",
-                path.file_name().unwrap().to_str().unwrap()
-            ));
-            dest_path = path;
         } else {
             assert_eq!(path.extension().unwrap(), "vm");
-            vm_files.push(path.clone());
-            dest_path = {
-                path.set_extension("asm");
-                path
-            };
+            vm_files.push(path);
         }
 
         Self {
             vm_files,
-            dest_path,
             output: vec![],
             symbol_index: 0,
             return_index: 0,
             multi_files,
         }
-    }
-
-    pub fn dest_path(&self) -> &PathBuf {
-        &self.dest_path
     }
 
     pub fn run(&mut self) {
@@ -147,8 +130,8 @@ impl VmTranslator {
         }
     }
 
-    pub fn save_file(&self) {
-        save_file(&self.output, &self.dest_path).unwrap();
+    pub fn save_file(&self, dst_path: &PathBuf) {
+        save_file(&self.output, dst_path).unwrap();
     }
 }
 

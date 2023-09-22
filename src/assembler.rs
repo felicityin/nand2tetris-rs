@@ -13,7 +13,6 @@ pub static JMP_TABLE: OnceCell<HashMap<&str, &str>> = OnceCell::new();
 pub static PREDEFINED_SYMBOL_TABLE: OnceCell<HashMap<&str, u32>> = OnceCell::new();
 
 pub struct Assembler {
-    dest_path:     PathBuf,
     symbol_table:  HashMap<String, u32>,
     codes:         Vec<String>,
     output:        Vec<u8>,
@@ -22,7 +21,7 @@ pub struct Assembler {
 
 impl Assembler {
     /// Read in the file and ignore the blank lines and comment lines
-    pub fn new(mut path: PathBuf) -> Self {
+    pub fn new(path: PathBuf) -> Self {
         COMP_TABLE
             .set(HashMap::from([
                 ("0", "0101010"),
@@ -120,7 +119,7 @@ impl Assembler {
 
         let mut codes = vec![];
 
-        for line in read_to_string(path.clone()).unwrap().lines() {
+        for line in read_to_string(path).unwrap().lines() {
             let line = line.trim();
             if line.is_empty() || line.starts_with('/') {
                 continue;
@@ -132,10 +131,7 @@ impl Assembler {
             codes.push(line.to_string());
         }
 
-        path.set_extension("hack");
-
         Self {
-            dest_path: path,
             symbol_table,
             codes,
             output: vec![],
@@ -144,14 +140,9 @@ impl Assembler {
         }
     }
 
-    pub fn dest_path(&self) -> &PathBuf {
-        &self.dest_path
-    }
-
     pub fn run(&mut self) {
         self.process_lable();
         self.parse();
-        self.save_binary();
     }
 
     // First pass through the code to find label symbol like (Xxx)
@@ -236,7 +227,7 @@ impl Assembler {
         .unwrap();
     }
 
-    fn save_binary(&self) {
-        save_file(&self.output, &self.dest_path).unwrap();
+    pub fn save_binary(&self, dst_path: &PathBuf) {
+        save_file(&self.output, dst_path).unwrap();
     }
 }
