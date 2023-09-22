@@ -1,4 +1,4 @@
-# Descri-ption
+# Description
 
 This repository implements some of the projects in the book "The Elements of Computer Systems: Building a Modern Computer from First Principles".
 
